@@ -74,13 +74,13 @@ router.post(
 // // router for updateProfile
 router.patch(
   "/update-multiple-image",
-  upload.array("images", 5),
+  upload.array("images", 12),
   userController.update_multiple_image
 );
 // //  router for delete multiple images
 router.patch(
   "/delete-multiple-image",
-  upload.array("images", 5),
+  upload.array("images", 12),
   userController.delete_multiple_image
 );
 

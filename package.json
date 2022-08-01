@@ -25,6 +25,7 @@
     "nodemon": "^2.0.19",
     "promisify": "^0.0.3",
     "randomstring": "^1.2.2",
+    "uuid": "^8.3.2",
     "validate-phone-number-node-js": "^0.0.1"
   }
 }

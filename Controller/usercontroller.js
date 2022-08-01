@@ -5,13 +5,14 @@ const blogSchema = require("../Models/Blogmodel");
 const nodemailer = require("nodemailer");
 const randomstring = require("randomstring");
 var validator = require("email-validator");
-
+const { v4: uuidv4 } = require("uuid");
 const validatePhoneNumber = require("validate-phone-number-node-js");
 const { response } = require("../app");
 const fs = require("fs");
 const { promisify } = require("util");
 const ImageSchema = require("../Models/image.model");
 const { info } = require("console");
+const { update } = require("../Models/Usermodel");
 const unlinkAsync = promisify(fs.unlink);
 // ////////////////////////////////////////////////////
 
@@ -159,7 +160,9 @@ const Login_user = async function (req, res) {
       );
       console.log("passwordmatch:", passwordmatch);
       if (passwordmatch) {
-        // const tokendata = await useservice.create_token(userDatal._id);
+        const tokendata = await useservice.create_token(userDatal._id);
+        console.log("tokendata:", tokendata);
+        console.log("userDatal._id", userDatal._id);
         const userResult = {
           _id: userDatal._id,
           name: userDatal.name,
@@ -168,19 +171,21 @@ const Login_user = async function (req, res) {
           images: userDatal.images,
           mobile: userDatal.mobile,
           type: userDatal.type,
-          // token: tokendata,
+          token: tokendata,
         };
         const response = {
           success: true,
           message: "User Details",
           data: userResult,
+          token: tokendata,
         };
+
         res.status(200).send(response);
       } else {
-        res.status(200).send({ success: false, message: " Login user failed" });
+        res.status(200).send({ success: false, message: "Login user failed" });
       }
     } else {
-      res.status(200).send({ success: false, message: " Login_user failed" });
+      res.status(200).send({ success: false, message: "Login_user failed" });
     }
   } catch (e) {
     res.status(200).send(e.message);
@@ -241,7 +246,7 @@ const ResetPassword = async function (req, res) {
     res.status(400).send({ status: false, message: e.message });
   }
 };
-// // //////////////////////////////////////////////////////////////////////////////////
+// // ///////////////////////////////////////////////////////////////////////////////////////////////
 // // ForgetPassword controllers
 const ForgetPassword = async function (req, res) {
   // console.log("body:", req.body);
@@ -271,7 +276,7 @@ const ForgetPassword = async function (req, res) {
     res.status(400).send({ status: false, message: e.message });
   }
 };
-// // ////////////////////////////////////////
+// // //////////////////////////////////////////////////////////////////////////
 // // updateProfile controller
 const updateProfile = async function (req, res) {
   console.log("body:", req.body);
@@ -307,26 +312,21 @@ const updateProfile = async function (req, res) {
   }
 };
 // // //////////////////////////////////////////////////////////////////////////////
+
 // // upload images controller
 const Upload_images = async function (req, res) {
-  // console.log(req.body);
-  // console.log("reqfile:", req.files);
+  // console.log("req", req);
 
+  console.log(req.body);
+
+  console.log("reqfile:", req.files);
   try {
-    // const photos = req.files.map((file) => {
-    const photos = await ImageSchema.create({
-      urls: req.files.map((file) => file.filename),
-    });
-    // console
-    //  console.log("photo", photo, file);
-    // return file.filename;
-    // });
-    console.log("photos created", photos);
-
     const uploading = new blogSchema({
       title: req.body.title,
       descrition: req.body.descrition,
-      images: photos._id,
+      images: req.files.map((file) => {
+        return { id: uuidv4(), photo: file.filename };
+      }),
       field: req.body.field,
     });
     console.log("uploading:", uploading);
@@ -334,6 +334,7 @@ const Upload_images = async function (req, res) {
       res.status(200).send({ success: true, message: "Please choose a file" });
     } else {
       const userimges = await uploading.save();
+
       res.status(200).send({ success: true, data: userimges });
     }
   } catch (e) {
@@ -343,40 +344,44 @@ const Upload_images = async function (req, res) {
   }
 };
 
-// // ///////////////////////////////////////////////////////////
+// // ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // // update multiple image controllers
 
 const update_multiple_image = async function (req, res) {
-  // console.log("body", req.body);
-  // console.log("file", req.files);
-  // res.status(200).send({ data: req.files });
-  // return;
-  // console.log("body:", req.body);
-  // const profileupdate = await useservice.checkprofileId(req.body._id);
-  // console.log("profileupdate:", profileupdate);
-  // return;
   try {
-    const { imagedocId, filenames } = req.body;
+    console.log("reqbody", req.body);
+    // const { imagedocId, filenames } = req.body;
+    var img_obj = { img_id: [], blogid: "" };
+    img_obj = req.body;
+    img_obj.img_id = img_obj.img_id[0].split(",");
+    var update_images = [];
+    // update_images = req.files;
+    // console.log("req.file", req.files);
+    // console.log("reqbody", req.body);
 
-    const ExestingPhots = await ImageSchema.findById(imagedocId);
+    const ExestingPhots = await blogSchema.findById(img_obj.blogid);
     console.log("ExestingPhots", ExestingPhots);
-    console.log("filenames", filenames);
+    // return;
+    update_images = ["njnk", "nnlnl"];
 
-    const remainingphotos = ExestingPhots.urls.filter(
-      (url) => !filenames[0].split(",").includes(url)
-    );
-
-    console.log("remainingphotos", remainingphotos);
-    const newphotos = req.files.map((file) => file.filename);
-
-    const Updatedphotos = await ImageSchema.findByIdAndUpdate(
+    update_images.forEach((e, i) => {
+      console.log(img_obj.img_id[i]);
+      ExestingPhots.images.forEach((element) => {
+        console.log(element, "element");
+        if (img_obj.img_id[i] === element.id) {
+          element.photo = e;
+        }
+      });
+    });
+    console.log(ExestingPhots);
+    const Updatedphotos = await blogSchema.findByIdAndUpdate(
       {
-        _id: imagedocId,
+        _id: img_obj.blogid,
       },
-      { urls: [...remainingphotos, ...newphotos] }
+
+      { ...ExestingPhots }
     );
-    console.log("Updatedphotos", Updatedphotos);
-    res.status(200).send({ body: req.body });
+    res.status(200).send({ success: true });
   } catch (e) {
     res.status(400).send({ success: false, error: e.message });
   }
@@ -390,31 +395,37 @@ const delete_multiple_image = async function (req, res) {
   // console.log("body:", req.files);
 
   try {
-    const { imagedocId, filenames } = req.body;
-    const ExestingPhots = await ImageSchema.findById(imagedocId);
-    const remainingphotos = ExestingPhots.urls.filter(
-      (url) => !filenames[0].split(",").includes(url)
-    );
-    // console.log("ExestingPhots", ExestingPhots.urls);
-    // console.log("filename", filenames);
-    // console.log("remainingphotos", remainingphotos);
-    // const newphotos = req.files.map((file) => file.filename);
-    // console.log("reqfiles", req.files);
-    // console.log("newphotos", newphotos);
-    const Updatedphotos = await ImageSchema.findByIdAndUpdate(
+    console.log("reqbody", req.body);
+    // const { imagedocId, filenames } = req.body;
+    var img_obj = { img_id: [], blogid: "" };
+
+    img_obj = req.body;
+    img_obj.img_id = img_obj.img_id[0].split(",");
+    const ExestingPhots = await blogSchema.findById(img_obj.blogid);
+    console.log("ExestingPhots", ExestingPhots);
+    img_obj.img_id.forEach((e) => {
+      //console.log(img_obj.img_id[i]);
+
+      ExestingPhots.images = ExestingPhots.images.filter(
+        (element) => e !== element.id
+      );
+    });
+    //  / console.log(ExestingPhots);
+
+    const Updatedphotos = await blogSchema.findByIdAndUpdate(
       {
-        _id: imagedocId,
+        _id: img_obj.blogid,
       },
-      { urls: [...remainingphotos] }
+
+      { ...ExestingPhots }
     );
-    console.log("Updatedphotos", Updatedphotos);
+
     res.status(200).send({ body: req.body });
   } catch (e) {
     res.status(400).send({ success: false, error: e.message });
   }
 };
 // //////////////////////////////////////////////////////////////////////////////
-
 
 module.exports = {
   Register_user,
