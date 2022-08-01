@@ -9,10 +9,21 @@ const blogSchema = mongoose.Schema({
     type: String,
     required: true,
   },
+
   images: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "ImageSchema",
-    required: true,
+    type: "array",
+    items: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+        },
+        photo: {
+          type: "string",
+        },
+      },
+      required: ["id"],
+    },
   },
 
   field: {
