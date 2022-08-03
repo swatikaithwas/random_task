@@ -34,17 +34,17 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage: storage,
 
-  // fileFilter: function (req, file, cb) {
-  //   if (file.mimetype === "image/png" || file.mimetype === "image/jpeg") {
-  //     cb(null, true);
-  //   } else {
-  //     console.log("only jpg & png file supported !");
-  //     callbackPromise(null, false);
-  //   }
-  // },
-  // limits: {
-  //   fileSize: 1024 * 1024 * 2,
-  // },
+  fileFilter: function (req, file, cb) {
+    if (file.mimetype === "image/png" || file.mimetype === "image/jpeg") {
+      cb(null, true);
+    } else {
+      console.log("only jpg & png file supported !");
+      callbackPromise(null, false);
+    }
+  },
+  limits: {
+    fileSize: 1024 * 1024 * 2,
+  },
 });
 //  router for register
 router.post("/register", upload.single("images"), userController.Register_user);
@@ -84,7 +84,10 @@ router.patch(
   userController.delete_multiple_image
 );
 
-
+// //  router for add price
+router.post("/PriceAdd", userController.price_add);
+// //  router for updateprice
+router.patch("/PriceUpdate", userController.updatePrice);
 
 /* GET home page. */
 router.get("/", function (req, res, next) {

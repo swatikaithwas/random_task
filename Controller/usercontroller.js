@@ -14,6 +14,7 @@ const ImageSchema = require("../Models/image.model");
 const { info } = require("console");
 const { update } = require("../Models/Usermodel");
 const unlinkAsync = promisify(fs.unlink);
+const ProductSchema = require("../Models/Usermodel");
 // ////////////////////////////////////////////////////
 
 // this function use for sending email
@@ -291,6 +292,13 @@ const updateProfile = async function (req, res) {
       if (req.body.password) {
         User.password = req.body.password;
       }
+      fs.unlink("../random_task/public/userImages/" + profile.images, (err) => {
+        if (err) {
+          console.log("failed to delete local image:" + err);
+        } else {
+          console.log("successfully deleted local image");
+        }
+      });
       const userUpdateprofile = await profile.save();
       res.json({
         _id: userUpdateprofile._id,
@@ -425,6 +433,63 @@ const delete_multiple_image = async function (req, res) {
     res.status(400).send({ success: false, error: e.message });
   }
 };
+
+// controllers for price post
+const price_add = async (req, res) => {
+  console.log("reqbody", req.body);
+
+  try {
+    let usd_price = req.body.usd_price;
+    let updated_at = req.body.updated_at;
+    let created_at = req.body.created_at;
+    let status = req.body.status;
+    if (usd_price == "") {
+      return res
+        .status(400)
+        .send({ success: false, error: "please enter a usd_price" });
+    } else {
+      const Product_price = new ProductSchema({
+        usd_price: usd_price,
+        updated_at: updated_at,
+        created_at: created_at,
+        status: status,
+      });
+
+      const product_data = await Product_price.save();
+      res.status(200).send({ success: true, data: product_data });
+    }
+  } catch (e) {
+    res.status(400).send({ success: false, error: e.message });
+  }
+};
+
+const updatePrice = async function (req, res) {
+  console.log("body:", req.body);
+  const priceid = await useservice.checkpriceid(req.body._id);
+  console.log(req.body._id);
+  try {
+    if (priceid) {
+      priceid.usd_price = req.body.usd_price || priceid.usd_price;
+
+      const priceupdate = await priceid.save();
+      res.json({
+        _id: priceupdate._id,
+        usd_price: priceupdate.usd_price,
+      });
+
+      res.status(200).send({
+        status: true,
+        message: "usd_price updated successfully",
+        data: priceupdate,
+      });
+    } else {
+      res.status(200).send({ status: true, message: "not found" });
+    }
+  } catch (e) {
+    res.status(400).send({ status: false, message: e.message });
+  }
+};
+
 // //////////////////////////////////////////////////////////////////////////////
 
 module.exports = {
@@ -437,4 +502,6 @@ module.exports = {
   Upload_images,
   update_multiple_image,
   delete_multiple_image,
+  updatePrice,
+  price_add,
 };

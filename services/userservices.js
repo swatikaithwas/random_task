@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const config = require("../configs/config");
 const User = require("../Models/Usermodel");
 const blogSchema = require("../Models/Blogmodel");
-
+const ProductSchema = require("../Models/Productmodel");
 // below function for creating password secure
 const SecurePassword = async (password) => {
   try {
@@ -31,6 +31,14 @@ const checkprofile = async (_id) => {
     return false;
   }
 };
+const checkpriceid = async (_id) => {
+  let priceId = await ProductSchema.findById({ _id: _id });
+  if (priceId) {
+    return priceId;
+  } else {
+    return false;
+  }
+};
 // //  creating function
 // const checkprofileId = async (_id) => {
 //   let UserprofileId = await blogSchema.findById({ _id: _id });
@@ -40,4 +48,4 @@ const checkprofile = async (_id) => {
 //     return false;
 //   }
 // };
-module.exports = { SecurePassword, create_token, checkprofile };
+module.exports = { SecurePassword, create_token, checkprofile, checkpriceid };
